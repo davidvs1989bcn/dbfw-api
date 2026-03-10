@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DBFW Cards — Dragon Ball Fusion World TCG Database</title>
+  <link rel="icon" href="https://www.dbs-cardgame.com/fw/images/common/ico_favicon.ico">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0a0f;--card:#12121a;--surface:#1a1a25;--hover:#22222f;--accent:#e85d1a;--accent2:#ff6a22;--glow:rgba(232,93,26,.25);--t1:#eaeaf0;--t2:#8888a0;--t3:#55556a;--brd:#2a2a3a;--red:#e53e3e;--blue:#3182ce;--green:#38a169;--yellow:#d69e2e;--blk:#4a5568;--r:10px}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
+    .fd{font-family:'Bebas Neue',sans-serif;letter-spacing:.04em}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+    @keyframes su{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}.ai{animation:su .3s ease-out both}
+    .ci{transition:transform .25s,box-shadow .25s;cursor:pointer}.ci:hover{transform:translateY(-5px);box-shadow:0 12px 28px rgba(0,0,0,.5)}
+    .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
+    .b-l{background:linear-gradient(135deg,#f59e0b,#ea580c)}.b-c{background:#6b7280}.b-uc{background:#059669}.b-r{background:#2563eb}.b-sr{background:#7c3aed}.b-scr{background:linear-gradient(135deg,#ec4899,#e11d48)}.b-pr{background:#0891b2}
+    .inp{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);padding:9px 13px;font-size:14px;color:var(--t1);outline:none;font-family:inherit;transition:border-color .2s}.inp:focus{border-color:var(--accent)}.inp::placeholder{color:var(--t3)}
+    .btn{background:var(--accent);color:#fff;border:none;padding:9px 20px;border-radius:var(--r);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;transition:background .2s}.btn:hover{background:var(--accent2)}.btn:disabled{opacity:.35;cursor:default}
+    .ov{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useCallback}=React;
+const API=window.location.origin;
+const LOGO='https://dragonball.gg/wp-content/uploads/sites/36/2024/01/Dragon-Ball-Super-Card-Game-Fusion-World-Logo.png';
+const CLR={Red:{h:'#e53e3e'},Blue:{h:'#3182ce'},Green:{h:'#38a169'},Yellow:{h:'#d69e2e'},Black:{h:'#4a5568'},ALL:{h:'#888'}};
+const gc=c=>(CLR[c]||CLR.Red).h;
+const rb=r=>'badge b-'+(r||'c').toLowerCase();
+const get=async p=>(await fetch(API+p)).json();
+
+function Header({tab,setTab,user}){
+  const T=[{id:'cards',l:'Cards'},{id:'sets',l:'Sets'},{id:'stats',l:'Analytics'},{id:'auth',l:user?user.username:'Sign In'}];
+  return(
+    <header style={{background:'rgba(10,10,15,.92)',backdropFilter:'blur(12px)',borderBottom:'1px solid var(--brd)',position:'sticky',top:0,zIndex:50}}>
+      <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:62}}>
+        <img src={LOGO} alt="FW" style={{height:36,cursor:'pointer'}} onClick={()=>setTab('cards')}/>
+        <nav style={{display:'flex',gap:5}}>{T.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'7px 16px',borderRadius:'var(--r)',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:14,fontWeight:600,background:tab===t.id?'var(--accent)':'transparent',color:tab===t.id?'#fff':'var(--t2)',transition:'all .2s'}}>{t.l}</button>
+        ))}</nav>
+      </div>
+    </header>
+  );
+}
+
+function CardThumb({card,onClick,i}){
+  const[err,setErr]=useState(false);const h=gc(card.color);
+  return(
+    <div className="ci ai" onClick={()=>onClick(card)} style={{background:'var(--card)',borderRadius:'var(--r)',overflow:'hidden',border:'1px solid var(--brd)',animationDelay:Math.min(i*25,250)+'ms'}}>
+      <div style={{position:'relative',aspectRatio:'3/4.2',overflow:'hidden',background:'#0d0d14'}}>
+        {card.image_url&&!err?<img src={card.image_url} alt={card.name} loading="lazy" style={{width:'100%',height:'100%',objectFit:'cover'}} onError={()=>setErr(true)}/>
+        :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',background:h+'22',color:h,fontWeight:700,fontSize:14,textAlign:'center',padding:14}}>{card.name}</div>}
+        <span className={rb(card.rarity)} style={{position:'absolute',top:7,left:7}}>{card.rarity}</span>
+        <div style={{position:'absolute',top:7,right:7,width:9,height:9,borderRadius:'50%',background:h,boxShadow:'0 0 5px '+h}}/>
+        {card.cost&&card.cost!=='-'&&<div style={{position:'absolute',bottom:7,left:7,background:'rgba(0,0,0,.85)',color:'var(--accent)',fontWeight:800,fontSize:12,width:26,height:26,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid var(--accent)'}}>{card.cost}</div>}
+      </div>
+      <div style={{padding:'9px 11px'}}>
+        <p style={{fontWeight:600,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{card.name}</p>
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:3}}>
+          <span style={{fontSize:11,color:'var(--t3)'}}>{card.card_type}</span>
+          {card.power&&card.power!=='-'&&<span style={{fontSize:11,color:'var(--accent)',fontWeight:700}}>PWR {Number(card.power).toLocaleString()}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CardDetail({card,onClose}){
+  if(!card)return null;const h=gc(card.color);
+  return(
+    <div className="ov" onClick={onClose}><div className="ai" onClick={e=>e.stopPropagation()} style={{background:'var(--card)',borderRadius:14,maxWidth:660,width:'100%',maxHeight:'90vh',overflow:'auto',border:'1px solid var(--brd)'}}>
+      <div style={{display:'flex',flexWrap:'wrap'}}>
+        <div style={{flex:'1 1 250px',padding:14,minWidth:250}}>
+          {card.image_url?<img src={card.image_url} alt={card.name} style={{width:'100%',borderRadius:10,border:'2px solid '+h}} onError={e=>e.target.style.display='none'}/>
+          :<div style={{width:'100%',aspectRatio:'3/4',background:h+'22',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',color:h,fontWeight:700,fontSize:18}}>{card.name}</div>}
+        </div>
+        <div style={{flex:'1 1 280px',padding:'18px 18px 18px 4px',minWidth:270}}>
+          <div style={{display:'flex',justifyContent:'space-between'}}>
+            <div><h2 className="fd" style={{fontSize:26,lineHeight:1.1}}>{card.name}</h2><p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>{card.id} · {card.set_name||card.set_id}</p></div>
+            <button onClick={onClose} style={{background:'none',border:'none',color:'var(--t3)',fontSize:20,cursor:'pointer'}}>✕</button>
+          </div>
+          <div style={{display:'flex',gap:5,marginTop:10,flexWrap:'wrap'}}>
+            <span style={{background:h,color:'#fff',padding:'3px 9px',borderRadius:5,fontSize:11,fontWeight:600}}>{card.color}</span>
+            <span className={rb(card.rarity)}>{card.rarity}</span>
+            <span style={{background:'var(--surface)',color:'var(--t2)',padding:'3px 9px',borderRadius:5,fontSize:11,fontWeight:600}}>{card.card_type}</span>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:7,marginTop:14}}>
+            {card.cost!=='-'&&<div style={{background:'var(--surface)',borderRadius:7,padding:9,textAlign:'center'}}><p style={{fontSize:10,color:'var(--t3)'}}>Cost</p><p className="fd" style={{fontSize:22,color:'var(--accent)'}}>{card.cost}</p></div>}
+            {card.power!=='-'&&<div style={{background:'var(--surface)',borderRadius:7,padding:9,textAlign:'center'}}><p style={{fontSize:10,color:'var(--t3)'}}>Power</p><p className="fd" style={{fontSize:22,color:'var(--red)'}}>{Number(card.power).toLocaleString()}</p></div>}
+            {card.combo_power!=='-'&&<div style={{background:'var(--surface)',borderRadius:7,padding:9,textAlign:'center'}}><p style={{fontSize:10,color:'var(--t3)'}}>Combo</p><p className="fd" style={{fontSize:22,color:'var(--green)'}}>+{Number(card.combo_power).toLocaleString()}</p></div>}
+          </div>
+          {card.features&&<div style={{marginTop:12}}><p style={{fontSize:10,color:'var(--t3)'}}>Traits</p><p style={{fontSize:13,color:'var(--yellow)',marginTop:2}}>{card.features}</p></div>}
+          {card.effect&&<div style={{marginTop:12}}><p style={{fontSize:10,color:'var(--t3)',marginBottom:3}}>Effect</p><p style={{fontSize:13,color:'var(--t2)',lineHeight:1.5,whiteSpace:'pre-line'}}>{card.effect.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'')}</p></div>}
+          {card.tags&&card.tags.length>0&&<div style={{marginTop:12}}><p style={{fontSize:10,color:'var(--t3)',marginBottom:3}}>Tags</p><div style={{display:'flex',gap:4,flexWrap:'wrap'}}>{card.tags.map(t=><span key={t.tag} style={{background:'var(--accent)'+'20',color:'var(--accent)',fontSize:11,padding:'2px 7px',borderRadius:16}}>#{t.tag}</span>)}</div></div>}
+        </div>
+      </div>
+    </div></div>
+  );
+}
+
+function CardsPage(){
+  const[cards,setCards]=useState([]);const[loading,setLoading]=useState(true);
+  const[f,setF]=useState({name:'',color:'',card_type:'',rarity:'',set_id:''});
+  const[pg,setPg]=useState({page:1,total:0,totalPages:0});
+  const[sel,setSel]=useState(null);const[sets,setSets]=useState([]);
+  useEffect(()=>{get('/api/sets').then(r=>r.success&&setSets(r.data))},[]);
+  const load=useCallback(async(p=1)=>{setLoading(true);const q=new URLSearchParams({page:p,limit:24});Object.entries(f).forEach(([k,v])=>{if(v)q.append(k,v)});const r=await get('/api/cards?'+q);if(r.success){setCards(r.data);setPg(r.pagination)}setLoading(false)},[f]);
+  useEffect(()=>{load(1)},[load]);
+  const detail=async c=>{const r=await get('/api/cards/'+c.id);if(r.success)setSel(r.data)};
+  const uf=(k,v)=>setF(p=>({...p,[k]:v}));
+  return(
+    <div className="ai">
+      <div style={{background:'var(--card)',borderRadius:'var(--r)',padding:14,marginBottom:20,border:'1px solid var(--brd)',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(170px,1fr))',gap:8}}>
+        <input className="inp" placeholder="Search by name..." value={f.name} onChange={e=>uf('name',e.target.value)}/>
+        <select className="inp" value={f.color} onChange={e=>uf('color',e.target.value)}><option value="">All colors</option>{['Red','Blue','Green','Yellow','Black'].map(c=><option key={c}>{c}</option>)}</select>
+        <select className="inp" value={f.card_type} onChange={e=>uf('card_type',e.target.value)}><option value="">All types</option>{['LEADER','BATTLE','EXTRA','ENERGY MARKER'].map(t=><option key={t}>{t}</option>)}</select>
+        <select className="inp" value={f.rarity} onChange={e=>uf('rarity',e.target.value)}><option value="">All rarities</option>{['L','C','UC','R','SR','SCR','PR'].map(r=><option key={r}>{r}</option>)}</select>
+        <select className="inp" value={f.set_id} onChange={e=>uf('set_id',e.target.value)}><option value="">All sets</option>{sets.map(s=><option key={s.id} value={s.id}>[{s.code}] {s.name}</option>)}</select>
+      </div>
+      <p style={{color:'var(--t3)',fontSize:13,marginBottom:14}}>{pg.total} results</p>
+      {loading?<p style={{textAlign:'center',padding:50,color:'var(--accent)',fontWeight:600}}>Loading...</p>
+      :cards.length===0?<p style={{textAlign:'center',padding:50,color:'var(--t3)'}}>No cards match these filters.</p>
+      :<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(170px,1fr))',gap:12}}>{cards.map((c,i)=><CardThumb key={c.id} card={c} onClick={detail} i={i}/>)}</div>}
+      {pg.totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:8,marginTop:28}}>
+        <button className="btn" disabled={!pg.hasPrev} onClick={()=>load(pg.page-1)}>Previous</button>
+        <span style={{padding:'9px 14px',fontSize:13,color:'var(--t3)'}}>Page {pg.page} / {pg.totalPages}</span>
+        <button className="btn" disabled={!pg.hasNext} onClick={()=>load(pg.page+1)}>Next</button>
+      </div>}
+      <CardDetail card={sel} onClose={()=>setSel(null)}/>
+    </div>
+  );
+}
+
+function SetsPage(){
+  const[sets,setSets]=useState([]);const[ld,setLd]=useState(true);
+  useEffect(()=>{get('/api/sets').then(r=>{if(r.success)setSets(r.data);setLd(false)})},[]);
+  if(ld)return<p style={{textAlign:'center',padding:50,color:'var(--accent)'}}>Loading...</p>;
+  const g={'Booster Packs':sets.filter(s=>s.type==='booster'),'Starter Decks':sets.filter(s=>s.type==='starter'),'Promo & Events':sets.filter(s=>s.type!=='booster'&&s.type!=='starter')};
+  return(
+    <div className="ai">{Object.entries(g).map(([t,items])=>items.length>0&&(
+      <div key={t} style={{marginBottom:30}}>
+        <h2 className="fd" style={{fontSize:22,marginBottom:12}}>{t}</h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:10}}>{items.map(s=>{
+          const img='https://static.dotgg.gg/dragonball/card/'+s.code+'-001.webp';
+          return(<div key={s.id} className="ci" style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:14,display:'flex',gap:12,alignItems:'center'}}>
+            <img src={img} alt={s.name} style={{width:52,height:72,borderRadius:5,objectFit:'cover',background:'var(--surface)'}} onError={e=>e.target.style.display='none'}/>
+            <div style={{flex:1}}>
+              <span style={{fontSize:11,fontWeight:700,color:'var(--accent)',background:'var(--accent)'+'18',padding:'2px 7px',borderRadius:4}}>{s.code}</span>
+              <h3 style={{fontSize:15,fontWeight:600,marginTop:3}}>{s.name}</h3>
+              <div style={{display:'flex',justifyContent:'space-between',marginTop:3}}>
+                <span style={{fontSize:12,color:'var(--t3)'}}>{s.card_count||s.total_cards||0} cards</span>
+                {s.release_date&&<span style={{fontSize:12,color:'var(--t3)'}}>{new Date(s.release_date).toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</span>}
+              </div>
+            </div>
+          </div>)
+        })}</div>
+      </div>
+    ))}</div>
+  );
+}
+
+function StatsPage(){
+  const[st,setSt]=useState(null);const[sd,setSd]=useState([]);const[ld,setLd]=useState(true);
+  useEffect(()=>{Promise.all([get('/api/analytics/stats'),get('/api/analytics/sets')]).then(([s,ss])=>{if(s.success)setSt(s.data);if(ss.success)setSd(ss.data);setLd(false)})},[]);
+  if(ld)return<p style={{textAlign:'center',padding:50,color:'var(--accent)'}}>Loading...</p>;
+  const B=({l,v})=>(<div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:20,textAlign:'center'}}><p className="fd" style={{fontSize:34,color:'var(--accent)'}}>{v}</p><p style={{color:'var(--t3)',fontSize:13,marginTop:3}}>{l}</p></div>);
+  return(
+    <div className="ai">
+      <h2 className="fd" style={{fontSize:22,marginBottom:12}}>Platform Overview</h2>
+      {st&&<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:28}}><B l="Cards" v={st.total_cards}/><B l="Sets" v={st.total_sets}/><B l="Users" v={st.total_users}/><B l="Public Decks" v={st.total_public_decks}/></div>}
+      <h2 className="fd" style={{fontSize:22,marginBottom:12}}>Cards per Set</h2>
+      <div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',overflow:'hidden'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
+          <thead><tr style={{background:'var(--surface)'}}>
+            <th style={{textAlign:'left',padding:10,color:'var(--t3)',fontWeight:600}}>Set</th>
+            <th style={{textAlign:'center',padding:10,color:'var(--t3)',fontWeight:600}}>Code</th>
+            <th style={{textAlign:'center',padding:10,color:'var(--t3)',fontWeight:600}}>Cards</th>
+          </tr></thead>
+          <tbody>{sd.map(s=>(<tr key={s.id} style={{borderTop:'1px solid var(--brd)'}}>
+            <td style={{padding:10,fontWeight:500}}>{s.name}</td>
+            <td style={{padding:10,textAlign:'center',color:'var(--accent)',fontWeight:700}}>{s.code}</td>
+            <td style={{padding:10,textAlign:'center',fontWeight:700}}>{s.total_cards}</td>
+          </tr>))}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AuthPage({token,setToken,user,setUser}){
+  const[m,setM]=useState('login');const[f,setF]=useState({username:'',email:'',password:''});const[msg,setMsg]=useState('');
+  const go=async()=>{setMsg('');if(m==='login'){const r=await(await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email,password:f.password})})).json();if(r.success){setToken(r.data.token);setUser(r.data.user);setMsg('Logged in.')}else setMsg(r.message)}else{const r=await(await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(f)})).json();if(r.success){setMsg('Account created. Sign in now.');setM('login')}else setMsg(r.message)}};
+  if(token&&user)return(
+    <div className="ai" style={{maxWidth:380,margin:'0 auto'}}><div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:28,textAlign:'center'}}>
+      <div style={{width:56,height:56,borderRadius:'50%',background:'var(--accent)'+'22',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',fontSize:24,fontWeight:800,color:'var(--accent)'}}>{user.username[0].toUpperCase()}</div>
+      <h2 className="fd" style={{fontSize:26}}>{user.username}</h2>
+      <p style={{color:'var(--t3)',fontSize:13}}>{user.email}</p>
+      <span style={{display:'inline-block',marginTop:6,fontSize:11,padding:'3px 10px',borderRadius:16,background:user.role==='admin'?'var(--accent)'+'22':'var(--blue)'+'22',color:user.role==='admin'?'var(--accent)':'var(--blue)',fontWeight:600,textTransform:'uppercase'}}>{user.role}</span>
+      <button className="btn" style={{width:'100%',marginTop:20}} onClick={()=>{setToken(null);setUser(null)}}>Sign Out</button>
+    </div></div>
+  );
+  return(
+    <div className="ai" style={{maxWidth:380,margin:'0 auto'}}><div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:24}}>
+      <div style={{display:'flex',gap:5,marginBottom:18}}>{['login','register'].map(x=>(<button key={x} onClick={()=>setM(x)} style={{flex:1,padding:9,borderRadius:'var(--r)',border:'none',fontFamily:'inherit',fontWeight:600,fontSize:14,cursor:'pointer',background:m===x?'var(--accent)':'var(--surface)',color:m===x?'#fff':'var(--t3)',transition:'all .2s'}}>{x==='login'?'Sign In':'Register'}</button>))}</div>
+      {m==='register'&&<input className="inp" style={{width:'100%',marginBottom:8}} placeholder="Username" value={f.username} onChange={e=>setF(p=>({...p,username:e.target.value}))}/>}
+      <input className="inp" style={{width:'100%',marginBottom:8}} type="email" placeholder="Email" value={f.email} onChange={e=>setF(p=>({...p,email:e.target.value}))}/>
+      <input className="inp" style={{width:'100%',marginBottom:14}} type="password" placeholder="Password" value={f.password} onChange={e=>setF(p=>({...p,password:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&go()}/>
+      <button className="btn" style={{width:'100%',fontSize:15,padding:11}} onClick={go}>{m==='login'?'Sign In':'Create Account'}</button>
+      {msg&&<p style={{marginTop:10,fontSize:13,textAlign:'center',color:msg.includes('Logged')||msg.includes('created')?'var(--green)':'var(--red)'}}>{msg}</p>}
+      {m==='login'&&<p style={{marginTop:14,fontSize:11,textAlign:'center',color:'var(--t3)'}}>Default admin: admin@dbfw.com / admin123</p>}
+    </div></div>
+  );
+}
+
+function App(){
+  const[tab,setTab]=useState('cards');const[tk,setTk]=useState(null);const[usr,setUsr]=useState(null);
+  return(<div>
+    <Header tab={tab} setTab={setTab} user={usr}/>
+    <main style={{maxWidth:1280,margin:'0 auto',padding:'22px 20px 50px'}}>
+      {tab==='cards'&&<CardsPage/>}{tab==='sets'&&<SetsPage/>}{tab==='stats'&&<StatsPage/>}{tab==='auth'&&<AuthPage token={tk} setToken={setTk} user={usr} setUser={setUsr}/>}
+    </main>
+    <footer style={{textAlign:'center',padding:'20px',borderTop:'1px solid var(--brd)',fontSize:12,color:'var(--t3)'}}>
+      DBFW Cards &mdash; Dragon Ball Fusion World TCG Database &middot; <a href="/api-docs" style={{color:'var(--accent)',textDecoration:'none'}}>API Docs</a> &middot; <a href="/api" style={{color:'var(--accent)',textDecoration:'none'}}>REST API</a>
+    </footer>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

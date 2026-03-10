@@ -1,0 +1,36 @@
+{
+  "name": "dbfw-api",
+  "version": "1.0.0",
+  "description": "Dragon Ball Fusion World TCG - REST API con catálogo, deck builder, ratings y analytics",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "seed:db": "node database/runSchema.js",
+    "migrate": "node database/migrate.js",
+    "seed:local": "node seed/seedLocal.js",
+    "seed:generate": "node seed/generateCards.js",
+    "seed:cards": "node seed/fetchCards.js",
+    "scrape:all": "node seed/scrapeAll.js",
+    "import:bandai": "node seed/importBandai.js",
+    "test": "jest --verbose --forceExit --detectOpenHandles"
+  },
+  "keywords": ["dragon-ball", "fusion-world", "tcg", "api", "rest"],
+  "author": "David",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.0",
+    "express-rate-limit": "^7.4.0",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "nodemon": "^3.1.4"
+  }
+}

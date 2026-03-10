@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DBFW Cards</title>
+  <link rel="icon" href="https://www.dbs-cardgame.com/fw/images/common/ico_favicon.ico">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0a0f;--card:#12121a;--sf:#1a1a25;--accent:#e85d1a;--accent2:#ff6a22;--t1:#eaeaf0;--t2:#8888a0;--t3:#55556a;--brd:#2a2a3a;--red:#e53e3e;--blue:#3182ce;--green:#38a169;--yellow:#d69e2e;--blk:#4a5568;--r:10px}
+    *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}.fd{font-family:'Bebas Neue',sans-serif;letter-spacing:.04em}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+    @keyframes su{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.ai{animation:su .3s ease-out both}
+    .ci{transition:transform .2s,box-shadow .2s;cursor:pointer}.ci:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(0,0,0,.4)}
+    .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}.b-l{background:linear-gradient(135deg,#f59e0b,#ea580c)}.b-c{background:#6b7280}.b-uc{background:#059669}.b-r{background:#2563eb}.b-sr{background:#7c3aed}.b-scr{background:linear-gradient(135deg,#ec4899,#e11d48)}.b-pr{background:#0891b2}
+    .inp{background:var(--sf);border:1px solid var(--brd);border-radius:var(--r);padding:9px 13px;font-size:14px;color:var(--t1);outline:none;font-family:inherit;transition:border-color .2s;width:100%}.inp:focus{border-color:var(--accent)}.inp::placeholder{color:var(--t3)}
+    .btn{background:var(--accent);color:#fff;border:none;padding:9px 18px;border-radius:var(--r);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;transition:background .2s}.btn:hover{background:var(--accent2)}.btn:disabled{opacity:.35;cursor:default}
+    .btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+    .btn-ghost{background:transparent;border:1px solid var(--brd);color:var(--t2)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-owned{background:#059669}.btn-wanted{background:#d69e2e}.btn-ordered{background:#3182ce}.btn-trading{background:#7c3aed}
+    .ov{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{max-width:1280px;margin:0 auto;padding:22px 20px 50px}
+    .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+    .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useCallback}=React;
+const API=window.location.origin;
+const LOGO='https://dragonball.gg/wp-content/uploads/sites/36/2024/01/Dragon-Ball-Super-Card-Game-Fusion-World-Logo.png';
+const CLR={Red:'#e53e3e',Blue:'#3182ce',Green:'#38a169',Yellow:'#d69e2e',Black:'#4a5568',ALL:'#888'};
+const gc=c=>CLR[c]||CLR.Red;
+const rb=r=>'badge b-'+(r||'c').toLowerCase();
+const ST_CLR={owned:'#059669',wanted:'#d69e2e',ordered:'#3182ce',trading:'#7c3aed'};
+const get=async p=>{const r=await fetch(API+p);return r.json()};
+const post=async(p,b,t)=>{const r=await fetch(API+p,{method:'POST',headers:{'Content-Type':'application/json',...(t?{Authorization:'Bearer '+t}:{})},body:JSON.stringify(b)});return r.json()};
+const del=async(p,t)=>{const r=await fetch(API+p,{method:'DELETE',headers:{Authorization:'Bearer '+t}});return r.json()};
+const authedGet=async(p,t)=>{const r=await fetch(API+p,{headers:{Authorization:'Bearer '+t}});return r.json()};
+
+function Header({tab,setTab,user}){
+  const T=[{id:'cards',l:'Cards'},{id:'sets',l:'Sets'},{id:'collection',l:'Collection'},{id:'stats',l:'Analytics'},{id:'auth',l:user?user.username:'Sign In'}];
+  return(
+    <header style={{background:'rgba(10,10,15,.92)',backdropFilter:'blur(12px)',borderBottom:'1px solid var(--brd)',position:'sticky',top:0,zIndex:50}}>
+      <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:60}}>
+        <img src={LOGO} alt="FW" style={{height:34,cursor:'pointer'}} onClick={()=>setTab('cards')}/>
+        <nav style={{display:'flex',gap:4,flexWrap:'wrap'}}>{T.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'6px 14px',borderRadius:'var(--r)',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:600,background:tab===t.id?'var(--accent)':'transparent',color:tab===t.id?'#fff':'var(--t2)',transition:'all .2s'}}>{t.l}</button>
+        ))}</nav>
+      </div>
+    </header>
+  );
+}
+
+function CardThumb({card,onClick,i,extra}){
+  const[err,setErr]=useState(false);const h=gc(card.color);
+  return(
+    <div className="ci ai" onClick={()=>onClick&&onClick(card)} style={{background:'var(--card)',borderRadius:'var(--r)',overflow:'hidden',border:'1px solid var(--brd)',animationDelay:Math.min((i||0)*20,200)+'ms',position:'relative'}}>
+      {card.status&&<div style={{position:'absolute',top:0,left:0,right:0,zIndex:2,background:ST_CLR[card.status],color:'#fff',fontSize:10,fontWeight:700,textAlign:'center',padding:'2px 0',textTransform:'uppercase',letterSpacing:'.5px'}}>{card.status}</div>}
+      <div style={{position:'relative',aspectRatio:'3/4.2',overflow:'hidden',background:'#0d0d14'}}>
+        {card.image_url&&!err?<img src={card.image_url} alt={card.name} loading="lazy" style={{width:'100%',height:'100%',objectFit:'cover'}} onError={()=>setErr(true)}/>
+        :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',background:h+'22',color:h,fontWeight:700,fontSize:13,textAlign:'center',padding:12}}>{card.name}</div>}
+        <span className={rb(card.rarity)} style={{position:'absolute',top:card.status?22:6,left:6}}>{card.rarity}</span>
+        <div style={{position:'absolute',top:card.status?22:6,right:6,width:8,height:8,borderRadius:'50%',background:h,boxShadow:'0 0 5px '+h}}/>
+        {card.cost&&card.cost!=='-'&&<div style={{position:'absolute',bottom:6,left:6,background:'rgba(0,0,0,.85)',color:'var(--accent)',fontWeight:800,fontSize:12,width:24,height:24,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid var(--accent)'}}>{card.cost}</div>}
+      </div>
+      <div style={{padding:'8px 10px'}}>
+        <p style={{fontWeight:600,fontSize:12,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{card.name}</p>
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:2}}>
+          <span style={{fontSize:10,color:'var(--t3)'}}>{card.card_type}</span>
+          {card.power&&card.power!=='-'&&<span style={{fontSize:10,color:'var(--accent)',fontWeight:700}}>{Number(card.power).toLocaleString()}</span>}
+        </div>
+      </div>
+      {extra}
+    </div>
+  );
+}
+
+function CardDetail({card,onClose,token,onStatusChange}){
+  if(!card)return null;const h=gc(card.color);
+  const setStatus=async(st)=>{if(!token)return;await post('/api/collection/'+card.id,{status:st},token);onStatusChange&&onStatusChange()};
+  return(
+    <div className="ov" onClick={onClose}><div className="ai" onClick={e=>e.stopPropagation()} style={{background:'var(--card)',borderRadius:14,maxWidth:660,width:'100%',maxHeight:'90vh',overflow:'auto',border:'1px solid var(--brd)'}}>
+      <div style={{display:'flex',flexWrap:'wrap'}}>
+        <div style={{flex:'1 1 240px',padding:14,minWidth:240}}>
+          {card.image_url?<img src={card.image_url} alt={card.name} style={{width:'100%',borderRadius:10,border:'2px solid '+h}} onError={e=>e.target.style.display='none'}/>
+          :<div style={{width:'100%',aspectRatio:'3/4',background:h+'22',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',color:h,fontWeight:700,fontSize:18}}>{card.name}</div>}
+        </div>
+        <div style={{flex:'1 1 270px',padding:'16px 16px 16px 4px',minWidth:260}}>
+          <div style={{display:'flex',justifyContent:'space-between'}}>
+            <div><h2 className="fd" style={{fontSize:24,lineHeight:1.1}}>{card.name}</h2><p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>{card.id} &middot; {card.set_name||card.set_id}</p></div>
+            <button onClick={onClose} style={{background:'none',border:'none',color:'var(--t3)',fontSize:18,cursor:'pointer'}}>&#10005;</button>
+          </div>
+          <div style={{display:'flex',gap:5,marginTop:10,flexWrap:'wrap'}}>
+            <span style={{background:h,color:'#fff',padding:'3px 9px',borderRadius:5,fontSize:11,fontWeight:600}}>{card.color}</span>
+            <span className={rb(card.rarity)}>{card.rarity}</span>
+            <span style={{background:'var(--sf)',color:'var(--t2)',padding:'3px 9px',borderRadius:5,fontSize:11,fontWeight:600}}>{card.card_type}</span>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginTop:12}}>
+            {card.cost!=='-'&&<div style={{background:'var(--sf)',borderRadius:7,padding:8,textAlign:'center'}}><p style={{fontSize:10,color:'var(--t3)'}}>Cost</p><p className="fd" style={{fontSize:20,color:'var(--accent)'}}>{card.cost}</p></div>}
+            {card.power!=='-'&&<div style={{background:'var(--sf)',borderRadius:7,padding:8,textAlign:'center'}}><p style={{fontSize:10,color:'var(--t3)'}}>Power</p><p className="fd" style={{fontSize:20,color:'var(--red)'}}>{Number(card.power).toLocaleString()}</p></div>}
+            {card.combo_power!=='-'&&<div style={{background:'var(--sf)',borderRadius:7,padding:8,textAlign:'center'}}><p style={{fontSize:10,color:'var(--t3)'}}>Combo</p><p className="fd" style={{fontSize:20,color:'var(--green)'}}>+{Number(card.combo_power).toLocaleString()}</p></div>}
+          </div>
+          {card.features&&<div style={{marginTop:10}}><p style={{fontSize:10,color:'var(--t3)'}}>Traits</p><p style={{fontSize:13,color:'var(--yellow)',marginTop:2}}>{card.features}</p></div>}
+          {card.effect&&<div style={{marginTop:10}}><p style={{fontSize:10,color:'var(--t3)',marginBottom:2}}>Effect</p><p style={{fontSize:12,color:'var(--t2)',lineHeight:1.5,whiteSpace:'pre-line'}}>{card.effect.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'')}</p></div>}
+          {token&&<div style={{marginTop:14,borderTop:'1px solid var(--brd)',paddingTop:12}}>
+            <p style={{fontSize:11,color:'var(--t3)',marginBottom:6}}>My Collection</p>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              {['owned','wanted','ordered','trading'].map(s=>(
+                <button key={s} className={'btn btn-sm btn-'+s} onClick={()=>setStatus(s)} style={{textTransform:'capitalize'}}>{s}</button>
+              ))}
+              <button className="btn btn-sm btn-ghost" onClick={async()=>{await del('/api/collection/'+card.id,token);onStatusChange&&onStatusChange()}}>Remove</button>
+            </div>
+          </div>}
+        </div>
+      </div>
+    </div></div>
+  );
+}
+
+function CardsPage({token}){
+  const[cards,setCards]=useState([]);const[ld,setLd]=useState(true);
+  const[f,setF]=useState({name:'',color:'',card_type:'',rarity:'',set_id:''});
+  const[pg,setPg]=useState({page:1,total:0,totalPages:0});
+  const[sel,setSel]=useState(null);const[sets,setSets]=useState([]);
+  useEffect(()=>{get('/api/sets').then(r=>r.success&&setSets(r.data))},[]);
+  const load=useCallback(async(p=1)=>{setLd(true);const q=new URLSearchParams({page:p,limit:24});Object.entries(f).forEach(([k,v])=>{if(v)q.append(k,v)});const r=await get('/api/cards?'+q);if(r.success){setCards(r.data);setPg(r.pagination)}setLd(false)},[f]);
+  useEffect(()=>{load(1)},[load]);
+  const detail=async c=>{const r=await get('/api/cards/'+c.id);if(r.success)setSel(r.data)};
+  const uf=(k,v)=>setF(p=>({...p,[k]:v}));
+  return(
+    <div className="ai">
+      <div style={{background:'var(--card)',borderRadius:'var(--r)',padding:12,marginBottom:18,border:'1px solid var(--brd)',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:8}}>
+        <input className="inp" placeholder="Search by name..." value={f.name} onChange={e=>uf('name',e.target.value)}/>
+        <select className="inp" value={f.color} onChange={e=>uf('color',e.target.value)}><option value="">All colors</option>{['Red','Blue','Green','Yellow','Black'].map(c=><option key={c}>{c}</option>)}</select>
+        <select className="inp" value={f.card_type} onChange={e=>uf('card_type',e.target.value)}><option value="">All types</option>{['LEADER','BATTLE','EXTRA','ENERGY MARKER'].map(t=><option key={t}>{t}</option>)}</select>
+        <select className="inp" value={f.rarity} onChange={e=>uf('rarity',e.target.value)}><option value="">All rarities</option>{['L','C','UC','R','SR','SCR','PR'].map(r=><option key={r}>{r}</option>)}</select>
+        <select className="inp" value={f.set_id} onChange={e=>uf('set_id',e.target.value)}><option value="">All sets</option>{sets.map(s=><option key={s.id} value={s.id}>[{s.code}] {s.name}</option>)}</select>
+      </div>
+      <p style={{color:'var(--t3)',fontSize:13,marginBottom:12}}>{pg.total} results</p>
+      {ld?<p style={{textAlign:'center',padding:50,color:'var(--accent)'}}>Loading...</p>
+      :cards.length===0?<p style={{textAlign:'center',padding:50,color:'var(--t3)'}}>No cards found.</p>
+      :<div className="grid-cards">{cards.map((c,i)=><CardThumb key={c.id} card={c} onClick={detail} i={i}/>)}</div>}
+      {pg.totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:8,marginTop:24}}>
+        <button className="btn" disabled={!pg.hasPrev} onClick={()=>load(pg.page-1)}>Prev</button>
+        <span style={{padding:'9px 12px',fontSize:13,color:'var(--t3)'}}>{pg.page} / {pg.totalPages}</span>
+        <button className="btn" disabled={!pg.hasNext} onClick={()=>load(pg.page+1)}>Next</button>
+      </div>}
+      <CardDetail card={sel} onClose={()=>setSel(null)} token={token}/>
+    </div>
+  );
+}
+
+function CollectionPage({token,user}){
+  const[items,setItems]=useState([]);const[ld,setLd]=useState(true);
+  const[filter,setFilter]=useState('');const[sel,setSel]=useState(null);
+  const[stats,setStats]=useState(null);
+
+  const load=async()=>{
+    if(!token){setLd(false);return}
+    setLd(true);
+    const q=filter?'?status='+filter:'';
+    const r=await authedGet('/api/collection'+q,token);
+    if(r.success)setItems(r.data);
+    const s=await authedGet('/api/collection/stats',token);
+    if(s.success)setStats(s.data);
+    setLd(false);
+  };
+  useEffect(()=>{load()},[token,filter]);
+
+  const detail=async c=>{const r=await get('/api/cards/'+c.card_id);if(r.success)setSel(r.data)};
+
+  if(!token) return(
+    <div className="ai" style={{textAlign:'center',padding:60}}>
+      <p className="fd" style={{fontSize:28,color:'var(--t2)'}}>Sign in to manage your collection</p>
+      <p style={{color:'var(--t3)',marginTop:8}}>Track which cards you own, want, or are looking to trade.</p>
+    </div>
+  );
+
+  const statCounts={owned:0,wanted:0,ordered:0,trading:0};
+  if(stats)stats.by_status.forEach(s=>{statCounts[s.status]=s.count});
+
+  return(
+    <div className="ai">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
+        <h2 className="fd" style={{fontSize:24}}>{user.username}'s Collection</h2>
+        <p style={{color:'var(--t3)',fontSize:13}}>Use the Cards tab to add cards to your collection</p>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:8,marginBottom:20}}>
+        {[{k:'',l:'All',n:items.length},{k:'owned',l:'Owned',n:statCounts.owned},{k:'wanted',l:'Wanted',n:statCounts.wanted},{k:'ordered',l:'Ordered',n:statCounts.ordered},{k:'trading',l:'Trading',n:statCounts.trading}].map(f=>(
+          <button key={f.k} onClick={()=>setFilter(f.k)} style={{background:filter===f.k?(f.k?ST_CLR[f.k]:'var(--accent)'):'var(--card)',color:'#fff',border:'1px solid '+(filter===f.k?'transparent':'var(--brd)'),borderRadius:'var(--r)',padding:'12px 10px',cursor:'pointer',fontFamily:'inherit',textAlign:'center',transition:'all .2s'}}>
+            <span className="fd" style={{fontSize:22,display:'block'}}>{f.n}</span>
+            <span style={{fontSize:12,opacity:.8}}>{f.l}</span>
+          </button>
+        ))}
+      </div>
+
+      {stats&&stats.completion&&stats.completion.length>0&&(
+        <div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:14,marginBottom:20}}>
+          <p style={{fontSize:12,color:'var(--t3)',marginBottom:8}}>Set completion (owned)</p>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            {stats.completion.map(s=>(
+              <div key={s.set_id} style={{background:'var(--sf)',borderRadius:6,padding:'6px 10px',fontSize:12}}>
+                <span style={{color:'var(--accent)',fontWeight:700}}>{s.set_id.toUpperCase()}</span>
+                <span style={{color:'var(--t2)',marginLeft:6}}>{s.owned}/{s.total}</span>
+                <span style={{color:'var(--t3)',marginLeft:4}}>({Math.round(s.owned/s.total*100)}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ld?<p style={{textAlign:'center',padding:50,color:'var(--accent)'}}>Loading...</p>
+      :items.length===0?<p style={{textAlign:'center',padding:50,color:'var(--t3)'}}>No cards in this view. Add cards from the Cards tab.</p>
+      :<div className="grid-cards">{items.map((c,i)=><CardThumb key={c.id} card={{...c,id:c.card_id}} onClick={()=>detail(c)} i={i}/>)}</div>}
+      <CardDetail card={sel} onClose={()=>setSel(null)} token={token} onStatusChange={load}/>
+    </div>
+  );
+}
+
+function SetsPage(){
+  const[sets,setSets]=useState([]);const[ld,setLd]=useState(true);
+  useEffect(()=>{get('/api/sets').then(r=>{if(r.success)setSets(r.data);setLd(false)})},[]);
+  if(ld)return<p style={{textAlign:'center',padding:50,color:'var(--accent)'}}>Loading...</p>;
+  const g={'Booster Packs':sets.filter(s=>s.type==='booster'),'Starter Decks':sets.filter(s=>s.type==='starter'),'Promo & Events':sets.filter(s=>s.type!=='booster'&&s.type!=='starter')};
+  return(
+    <div className="ai">{Object.entries(g).map(([t,items])=>items.length>0&&(
+      <div key={t} style={{marginBottom:28}}>
+        <h2 className="fd" style={{fontSize:22,marginBottom:10}}>{t}</h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:10}}>{items.map(s=>(
+          <div key={s.id} className="ci" style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:12,display:'flex',gap:10,alignItems:'center'}}>
+            <img src={'https://static.dotgg.gg/dragonball/card/'+s.code+'-001.webp'} alt="" style={{width:48,height:67,borderRadius:4,objectFit:'cover',background:'var(--sf)'}} onError={e=>e.target.style.display='none'}/>
+            <div style={{flex:1}}>
+              <span style={{fontSize:11,fontWeight:700,color:'var(--accent)',background:'var(--accent)'+'18',padding:'2px 6px',borderRadius:4}}>{s.code}</span>
+              <h3 style={{fontSize:14,fontWeight:600,marginTop:2}}>{s.name}</h3>
+              <span style={{fontSize:11,color:'var(--t3)'}}>{s.card_count||s.total_cards||0} cards</span>
+            </div>
+          </div>
+        ))}</div>
+      </div>
+    ))}</div>
+  );
+}
+
+function StatsPage(){
+  const[st,setSt]=useState(null);const[sd,setSd]=useState([]);const[ld,setLd]=useState(true);
+  useEffect(()=>{Promise.all([get('/api/analytics/stats'),get('/api/analytics/sets')]).then(([s,ss])=>{if(s.success)setSt(s.data);if(ss.success)setSd(ss.data);setLd(false)})},[]);
+  if(ld)return<p style={{textAlign:'center',padding:50,color:'var(--accent)'}}>Loading...</p>;
+  return(
+    <div className="ai">
+      <h2 className="fd" style={{fontSize:22,marginBottom:10}}>Platform</h2>
+      {st&&<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:10,marginBottom:24}}>
+        {[['Cards',st.total_cards],['Sets',st.total_sets],['Users',st.total_users],['Decks',st.total_public_decks]].map(([l,v])=>(
+          <div key={l} style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:18,textAlign:'center'}}><p className="fd" style={{fontSize:32,color:'var(--accent)'}}>{v}</p><p style={{color:'var(--t3)',fontSize:13}}>{l}</p></div>
+        ))}
+      </div>}
+      <h2 className="fd" style={{fontSize:22,marginBottom:10}}>Sets</h2>
+      <div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',overflow:'hidden'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+          <thead><tr style={{background:'var(--sf)'}}><th style={{textAlign:'left',padding:10,color:'var(--t3)'}}>Set</th><th style={{textAlign:'center',padding:10,color:'var(--t3)'}}>Code</th><th style={{textAlign:'center',padding:10,color:'var(--t3)'}}>Cards</th></tr></thead>
+          <tbody>{sd.map(s=>(<tr key={s.id} style={{borderTop:'1px solid var(--brd)'}}><td style={{padding:10}}>{s.name}</td><td style={{padding:10,textAlign:'center',color:'var(--accent)',fontWeight:700}}>{s.code}</td><td style={{padding:10,textAlign:'center',fontWeight:700}}>{s.total_cards}</td></tr>))}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AuthPage({token,setToken,user,setUser}){
+  const[m,setM]=useState('login');const[f,setF]=useState({username:'',email:'',password:''});const[msg,setMsg]=useState('');
+  const go=async()=>{setMsg('');if(m==='login'){const r=await post('/api/auth/login',{email:f.email,password:f.password});if(r.success){setToken(r.data.token);setUser(r.data.user);setMsg('Logged in.')}else setMsg(r.message)}else{const r=await post('/api/auth/register',f);if(r.success){setMsg('Account created. Sign in now.');setM('login')}else setMsg(r.message)}};
+  if(token&&user)return(
+    <div className="ai" style={{maxWidth:360,margin:'0 auto'}}><div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:26,textAlign:'center'}}>
+      <div style={{width:52,height:52,borderRadius:'50%',background:'var(--accent)'+'22',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',fontSize:22,fontWeight:800,color:'var(--accent)'}}>{user.username[0].toUpperCase()}</div>
+      <h2 className="fd" style={{fontSize:24}}>{user.username}</h2>
+      <p style={{color:'var(--t3)',fontSize:13}}>{user.email}</p>
+      <span style={{display:'inline-block',marginTop:6,fontSize:11,padding:'3px 10px',borderRadius:14,background:user.role==='admin'?'var(--accent)'+'22':'var(--blue)'+'22',color:user.role==='admin'?'var(--accent)':'var(--blue)',fontWeight:600,textTransform:'uppercase'}}>{user.role}</span>
+      <button className="btn" style={{width:'100%',marginTop:18}} onClick={()=>{setToken(null);setUser(null)}}>Sign Out</button>
+    </div></div>
+  );
+  return(
+    <div className="ai" style={{maxWidth:360,margin:'0 auto'}}><div style={{background:'var(--card)',border:'1px solid var(--brd)',borderRadius:'var(--r)',padding:22}}>
+      <div style={{display:'flex',gap:4,marginBottom:16}}>{['login','register'].map(x=>(<button key={x} onClick={()=>setM(x)} style={{flex:1,padding:8,borderRadius:'var(--r)',border:'none',fontFamily:'inherit',fontWeight:600,fontSize:14,cursor:'pointer',background:m===x?'var(--accent)':'var(--sf)',color:m===x?'#fff':'var(--t3)'}}>{x==='login'?'Sign In':'Register'}</button>))}</div>
+      {m==='register'&&<input className="inp" style={{marginBottom:8}} placeholder="Username" value={f.username} onChange={e=>setF(p=>({...p,username:e.target.value}))}/>}
+      <input className="inp" style={{marginBottom:8}} type="email" placeholder="Email" value={f.email} onChange={e=>setF(p=>({...p,email:e.target.value}))}/>
+      <input className="inp" style={{marginBottom:12}} type="password" placeholder="Password" value={f.password} onChange={e=>setF(p=>({...p,password:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&go()}/>
+      <button className="btn" style={{width:'100%',fontSize:15,padding:10}} onClick={go}>{m==='login'?'Sign In':'Create Account'}</button>
+      {msg&&<p style={{marginTop:10,fontSize:12,textAlign:'center',color:msg.includes('Logged')||msg.includes('created')?'var(--green)':'var(--red)'}}>{msg}</p>}
+    </div></div>
+  );
+}
+
+function App(){
+  const[tab,setTab]=useState('cards');const[tk,setTk]=useState(null);const[usr,setUsr]=useState(null);
+  return(<div>
+    <Header tab={tab} setTab={setTab} user={usr}/>
+    <div className="wrap">
+      {tab==='cards'&&<CardsPage token={tk}/>}
+      {tab==='sets'&&<SetsPage/>}
+      {tab==='collection'&&<CollectionPage token={tk} user={usr}/>}
+      {tab==='stats'&&<StatsPage/>}
+      {tab==='auth'&&<AuthPage token={tk} setToken={setTk} user={usr} setUser={setUsr}/>}
+    </div>
+    <footer style={{textAlign:'center',padding:'18px',borderTop:'1px solid var(--brd)',fontSize:12,color:'var(--t3)'}}>
+      DBFW Cards &middot; <a href="/api-docs" style={{color:'var(--accent)',textDecoration:'none'}}>API Docs</a> &middot; <a href="/api" style={{color:'var(--accent)',textDecoration:'none'}}>REST API</a>
+    </footer>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
